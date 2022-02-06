@@ -35,6 +35,7 @@
       <div style="display: flex; justify-content: center">
         <img id="tsumami" style="-webkit-user-drag: none" />
       </div>
+      <p>ボタンをドラッグして回す。</p>
     </div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -68,11 +69,19 @@
           }
         });
 
-        tsumamiElement.addEventListener("pointerdown", () => {
+        const down = () => {
           isPressing = true;
+        }
+
+        tsumamiElement.addEventListener("mousedown", (event) => {
+          down();
         });
 
-        document.addEventListener("pointermove", (event) => {
+        tsumamiElement.addEventListener("touchstart", (event) => {
+          down();
+        });
+
+        const move = (clientX, clientY) => {
           if (!isPressing) {
             return;
           }
@@ -81,8 +90,8 @@
 
           const radius = (tsumamiRect.width + tsumamiRect.height) / 4;
 
-          const x = event.clientX - (tsumamiRect.left + radius);
-          const y = event.clientY - (tsumamiRect.top + radius);
+          const x = clientX - (tsumamiRect.left + radius);
+          const y = clientY - (tsumamiRect.top + radius);
 
           const distance = (x ** 2 + y ** 2) ** 0.5;
 
@@ -108,14 +117,30 @@
           }
           // TODO: Optimize allowSeekAhead
           player.seekTo((1 - angle / Math.PI) * player.getDuration(), false);
+        }
+
+        document.addEventListener("mousemove", (event) => {
+          move(event.clientX, event.clientY);
         });
 
-        document.addEventListener("pointerup", () => {
+        document.addEventListener("touchmove", (event) => {
+          move(event.targetTouches[0].clientX, event.targetTouches[0].clientY);
+        });
+
+        const up = () => {
           isPressing = false;
 
           if (isPlaying) {
             player.playVideo();
           }
+        }
+
+        document.addEventListener("mouseup", (event) => {
+          up();
+        });
+
+        document.addEventListener("touchend", (event) => {
+          up();
         });
 
         setInterval(() => {
