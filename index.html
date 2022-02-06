@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head prefix="og: http://ogp.me/ns#">
+    <meta charset="utf-8" />
+
+    <meta
+      name="viewport"
+      content="minimum-scale=1, initial-scale=1, width=device-width"
+    />
+
+    <!--<meta name="description" content="Web toy synthesizer." />
+    <meta property="og:description" content="Web toy synthesizer." />
+
+    <meta
+      property="og:image"
+      content="https://troopa.b-hood.site/favicon.png"
+    />
+
+    <meta property="og:title" content="troopa" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://troopa.b-hood.site/" />
+
+    <meta name="twitter:card" content="summary" />
+
+    <link rel="apple-touch-icon" href="favicon.png" />
+    <link rel="icon" type="image/png" href="favicon.png" />-->
+
+    <title>tsumami</title>
+  </head>
+
+  <body>
+    <div style="display: inline-block">
+      <div id="player"></div>
+      <div style="display: flex; justify-content: center">
+        <img id="tsumami" style="-webkit-user-drag: none" />
+      </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script type="module">
+      window.onYouTubeIframeAPIReady = () => {
+        const player = new YT.Player("player", {
+          videoId: "M7lc1UVf-VE",
+          width: Math.min(window.innerWidth, 640) - 32,
+          events: {
+          },
+        });
+
+        const tsumamiElement = document.querySelector("#tsumami");
+
+        let isPlaying = true;
+        tsumamiElement.src = "play_circle_filled.svg";
+
+        let isPressing = false;
+
+        tsumamiElement.addEventListener("click", () => {
+          isPlaying = !isPlaying;
+
+          tsumamiElement.src = isPlaying
+            ? "play_circle_filled.svg"
+            : "pause.svg";
+
+          if (isPlaying) {
+            player.playVideo();
+          } else {
+            player.pauseVideo();
+          }
+        });
+
+        tsumamiElement.addEventListener("pointerdown", () => {
+          isPressing = true;
+        });
+
+        document.addEventListener("pointermove", (event) => {
+          if (!isPressing) {
+            return;
+          }
+
+          const tsumamiRect = tsumamiElement.getBoundingClientRect();
+
+          const radius = (tsumamiRect.width + tsumamiRect.height) / 4;
+
+          const x = event.clientX - (tsumamiRect.left + radius);
+          const y = event.clientY - (tsumamiRect.top + radius);
+
+          const distance = (x ** 2 + y ** 2) ** 0.5;
+
+          if (distance < radius) {
+            return;
+          }
+
+          let angle = Math.atan2(y, x);
+
+          if (angle >= -Math.PI && angle < -Math.PI / 2) {
+            angle = Math.PI;
+          }
+
+          if (angle >= -Math.PI / 2 && angle < 0) {
+            angle = 0;
+          }
+
+          tsumamiElement.style.transform = `rotate(${angle}rad)`;
+
+
+          if (isPlaying) {
+            player.pauseVideo();
+          }
+          // TODO: Optimize allowSeekAhead
+          player.seekTo((1 - angle / Math.PI) * player.getDuration(), false);
+        });
+
+        document.addEventListener("pointerup", () => {
+          isPressing = false;
+
+          if (isPlaying) {
+            player.playVideo();
+          }
+        });
+
+        setInterval(() => {
+          if (player.getPlayerState() !== 1) {
+            return ;
+          }
+
+          tsumamiElement.style.transform = `rotate(${
+            (1 - player.getCurrentTime() / player.getDuration()) * Math.PI
+          }rad)`;
+        }, 100);
+      };
+    </script>
+  </body>
+</html>
