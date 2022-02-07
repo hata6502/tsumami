@@ -29,17 +29,17 @@
     <title>tsumami</title>
   </head>
 
-  <body style="overscroll-behavior: none; ">
+  <body style="overscroll-behavior: none">
     <div style="display: inline-block">
       <div id="player"></div>
       <div style="display: flex; justify-content: center">
         <img id="tsumami" style="-webkit-user-drag: none" />
       </div>
       <p>
-        ▶ボタンをドラッグする。<br>
-        下方向にドラッグして再生位置を調整する。<br>
-        ボタンから離れるほど微調整になる。<br>
-        上方向にドラッグすると、動画先頭や末尾に移動する。<br>
+        ▶ボタンをドラッグする。<br />
+        下方向にドラッグして再生位置を調整する。<br />
+        ボタンから離れるほど微調整になる。<br />
+        上方向にドラッグすると、動画先頭や末尾に移動する。<br />
       </p>
     </div>
 
@@ -49,14 +49,13 @@
         const player = new YT.Player("player", {
           videoId: "5139SvcIRrc",
           width: Math.min(window.innerWidth, 640) - 32,
-          events: {
-          },
+          events: {},
         });
 
         const tsumamiElement = document.querySelector("#tsumami");
 
-        let isPlaying = true;
-        tsumamiElement.src = "play_circle_filled.svg";
+        let isPlaying = false;
+        tsumamiElement.src = "pause.svg";
 
         let isPressing = false;
 
@@ -76,7 +75,7 @@
 
         const down = () => {
           isPressing = true;
-        }
+        };
 
         tsumamiElement.addEventListener("mousedown", (event) => {
           down();
@@ -86,7 +85,7 @@
           down();
         });
 
-        const move = (clientX, clientY) => {
+        const move = (clientX, clientY, allowSeekAhead) => {
           if (!isPressing) {
             return;
           }
@@ -116,41 +115,48 @@
 
           tsumamiElement.style.transform = `rotate(${angle}rad)`;
 
-
           if (isPlaying) {
             player.pauseVideo();
           }
-          // TODO: Optimize allowSeekAhead
-          player.seekTo((1 - angle / Math.PI) * player.getDuration(), false);
-        }
+
+          player.seekTo(
+            (1 - angle / Math.PI) * player.getDuration(),
+            allowSeekAhead
+          );
+        };
 
         document.addEventListener("mousemove", (event) => {
-          move(event.clientX, event.clientY);
+          move(event.clientX, event.clientY, false);
         });
 
         document.addEventListener("touchmove", (event) => {
-          move(event.targetTouches[0].clientX, event.targetTouches[0].clientY);
+          move(
+            event.changedTouches[0].clientX,
+            event.changedTouches[0].clientY,
+            false
+          );
         });
 
-        const up = () => {
+        const up = (clientX, clientY) => {
+          move(clientX, clientY, true);
           isPressing = false;
 
           if (isPlaying) {
             player.playVideo();
           }
-        }
+        };
 
         document.addEventListener("mouseup", (event) => {
-          up();
+          up(event.clientX, event.clientY);
         });
 
         document.addEventListener("touchend", (event) => {
-          up();
+          up(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
         });
 
         setInterval(() => {
           if (player.getPlayerState() !== 1) {
-            return ;
+            return;
           }
 
           tsumamiElement.style.transform = `rotate(${
