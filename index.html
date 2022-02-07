@@ -85,6 +85,9 @@
           down();
         });
 
+        let buttonAngle = 0;
+        let prevAngle = 0;
+
         const move = (clientX, clientY, allowSeekAhead) => {
           if (!isPressing) {
             return;
@@ -96,33 +99,39 @@
 
           const x = clientX - (tsumamiRect.left + radius);
           const y = clientY - (tsumamiRect.top + radius);
+          let angle;
 
-          const distance = (x ** 2 + y ** 2) ** 0.5;
+          do {
+            angle = Math.atan2(y, x);
 
-          if (distance < radius) {
-            return;
-          }
+            const distance = (x ** 2 + y ** 2) ** 0.5;
+            const precision = distance / radius;
 
-          let angle = Math.atan2(y, x);
+            if (angle < -Math.PI / 2) {
+              buttonAngle = angle = Math.PI;
+            } else if (angle < 0) {
+              buttonAngle = angle = 0;
+            } else {
+              buttonAngle += (angle - prevAngle) / precision;
+            }
 
-          if (angle >= -Math.PI && angle < -Math.PI / 2) {
-            angle = Math.PI;
-          }
+            if (precision < 1) {
+              continue;
+            }
 
-          if (angle >= -Math.PI / 2 && angle < 0) {
-            angle = 0;
-          }
+            tsumamiElement.style.transform = `rotate(${buttonAngle}rad)`;
 
-          tsumamiElement.style.transform = `rotate(${angle}rad)`;
+            if (isPlaying) {
+              player.pauseVideo();
+            }
 
-          if (isPlaying) {
-            player.pauseVideo();
-          }
+            player.seekTo(
+              (1 - buttonAngle / Math.PI) * player.getDuration(),
+              allowSeekAhead
+            );
+          } while (false);
 
-          player.seekTo(
-            (1 - angle / Math.PI) * player.getDuration(),
-            allowSeekAhead
-          );
+          prevAngle = angle;
         };
 
         document.addEventListener("mousemove", (event) => {
@@ -159,9 +168,9 @@
             return;
           }
 
-          tsumamiElement.style.transform = `rotate(${
-            (1 - player.getCurrentTime() / player.getDuration()) * Math.PI
-          }rad)`;
+          buttonAngle =
+            (1 - player.getCurrentTime() / player.getDuration()) * Math.PI;
+          tsumamiElement.style.transform = `rotate(${buttonAngle}rad)`;
         }, 100);
       };
     </script>
